@@ -18,7 +18,7 @@
     button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
     button.secondary{background:#6b7280}
     .small{font-size:13px;padding:6px 8px}
-    .answer{margin-top:12px;padding:12px;border-radius:8px;background:#f1f5f9;display:none}
+    .answer{margin-top:12px;padding:12px;border-radius:8px;background:#f1f5f9;display:none;white-space: pre-wrap; font-family: monospace;}
     .meta{font-size:13px;color:#666;margin-top:8px}
     footer{font-size:13px;color:#666;margin-top:12px;text-align:center}
     .center{text-align:center}
@@ -34,8 +34,7 @@
 
     <div class="card">
       <div class="controls">
-        <button id="newBtn" class="small">Show Today's Quiz</button>
-        <button id="showAnswers" class="small">Show Answers</button>
+        <button id="toggleAnswers" class="small">Show Answers</button>
         <div style="flex:1"></div>
         <div class="meta" id="dateMeta"></div>
       </div>
@@ -139,8 +138,7 @@
 
     const quizList = document.getElementById('quizList');
     const answerBox = document.getElementById('answerBox');
-    const newBtn = document.getElementById('newBtn');
-    const showAnswers = document.getElementById('showAnswers');
+    const toggleAnswers = document.getElementById('toggleAnswers');
     const dateMeta = document.getElementById('dateMeta');
 
     function renderQuestions() {
@@ -153,22 +151,26 @@
       });
       const d = new Date();
       dateMeta.textContent = 'Questions for: ' + d.toDateString();
-      answerBox.style.display = 'none';
     }
 
-    function renderAnswers() {
-      const todays = pickTodayQuestions();
-      const lines = todays.map((q, i) => {
-        const ans = detectSubjectObject(q);
-        return (i+1) + '. ' + q + '\n   Subject: ' + ans.S + '   Object: ' + ans.O;
-      });
-      answerBox.textContent = lines.join('\n\n');
-      answerBox.style.display = 'block';
+    function toggleAnswersDisplay() {
+      if (answerBox.style.display === 'block') {
+        answerBox.style.display = 'none';
+        toggleAnswers.textContent = 'Show Answers';
+      } else {
+        const todays = pickTodayQuestions();
+        const lines = todays.map((q, i) => {
+          const ans = detectSubjectObject(q);
+          return (i + 1) + '. ' + q + '\n  Subject: ' + ans.S + ' | Object: ' + ans.O;
+        });
+        answerBox.textContent = lines.join('\n\n');
+        answerBox.style.display = 'block';
+        toggleAnswers.textContent = 'Hide Answers';
+      }
     }
 
     renderQuestions();
-    newBtn.addEventListener('click', () => renderQuestions());
-    showAnswers.addEventListener('click', () => renderAnswers());
+    toggleAnswers.addEventListener('click', toggleAnswersDisplay);
   </script>
 </body>
 </html>

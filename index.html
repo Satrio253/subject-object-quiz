@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Daily Subject & Object Quiz — 10 Questions</title>
+  <style>
+    :root{--bg:#f7f7f7;--card:#ffffff;--accent:#2b6cb0}
+    body{font-family: Arial, Helvetica, sans-serif;background:var(--bg);margin:0;padding:40px;display:flex;justify-content:center}
+    .wrap{width:900px;max-width:95%;}
+    header{text-align:center;margin-bottom:18px}
+    h1{margin:0;font-size:24px}
+    p.lead{margin:6px 0 18px;color:#444}
+    .card{background:var(--card);border-radius:12px;box-shadow:0 6px 22px rgba(0,0,0,0.08);padding:20px}
+    ol{padding-left:20px}
+    li{margin:10px 0}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#6b7280}
+    .small{font-size:13px;padding:6px 8px}
+    .answer{margin-top:12px;padding:12px;border-radius:8px;background:#f1f5f9;display:none}
+    .meta{font-size:13px;color:#666;margin-top:8px}
+    footer{font-size:13px;color:#666;margin-top:12px;text-align:center}
+    .center{text-align:center}
+    @media (max-width:520px){body{padding:18px}.card{padding:14px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Daily Subject & Object Quiz</h1>
+      <p class="lead">10 questions about subjects and objects. The quiz changes each day.</p>
+    </header>
+
+    <div class="card">
+      <div class="controls">
+        <button id="newBtn" class="small">Show Today's Quiz</button>
+        <button id="showAnswers" class="small">Show Answers</button>
+        <div style="flex:1"></div>
+        <div class="meta" id="dateMeta"></div>
+      </div>
+
+      <ol id="quizList" aria-live="polite"></ol>
+
+      <div class="answer" id="answerBox"></div>
+
+      <div class="center" style="margin-top:14px">
+        <small>Tips: Write <strong>S</strong> for subject and <strong>O</strong> for object. If the sentence has no object, write <strong>—</strong>.</small>
+      </div>
+    </div>
+
+    <footer>
+      <p>If you want to put this on GitHub: save this file as <code>subject-object-quiz.html</code> and push it to your repo. The quiz uses the browser date to change questions daily.</p>
+    </footer>
+  </div>
+
+  <script>
+    const pool = [
+      "The dog runs.",
+      "She drinks water.",
+      "They play football.",
+      "I read.",
+      "The teacher asks a question.",
+      "Birds eat worms.",
+      "He listens to music.",
+      "We watch TV.",
+      "My brother sleeps.",
+      "The cat catches a mouse.",
+      "Students write homework.",
+      "He opens the door.",
+      "I love pizza.",
+      "The baby cries.",
+      "The tall boy reads a new book.",
+      "My friends play games in the park.",
+      "She cleans the kitchen every morning.",
+      "The teacher gives the students a test.",
+      "The man who wears a red hat drives a car.",
+      "They buy fruits and vegetables at the market."
+    ];
+
+    function seedFromDate() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return Number('' + yyyy + mm + dd);
+    }
+
+    function LCG(seed) {
+      let s = seed % 2147483647;
+      if (s <= 0) s += 2147483646;
+      return function() {
+        s = (s * 16807) % 2147483647;
+        return (s - 1) / 2147483646;
+      };
+    }
+
+    function seededShuffle(array, seed) {
+      const rng = LCG(seed);
+      const arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function pickTodayQuestions() {
+      const seed = seedFromDate();
+      const shuffled = seededShuffle(pool, seed);
+      return shuffled.slice(0, 10);
+    }
+
+    function detectSubjectObject(sentence) {
+      const answers = {
+        "The dog runs.": {S: "The dog", O: "—"},
+        "She drinks water.": {S: "She", O: "water"},
+        "They play football.": {S: "They", O: "football"},
+        "I read.": {S: "I", O: "—"},
+        "The teacher asks a question.": {S: "The teacher", O: "a question"},
+        "Birds eat worms.": {S: "Birds", O: "worms"},
+        "He listens to music.": {S: "He", O: "music"},
+        "We watch TV.": {S: "We", O: "TV"},
+        "My brother sleeps.": {S: "My brother", O: "—"},
+        "The cat catches a mouse.": {S: "The cat", O: "a mouse"},
+        "Students write homework.": {S: "Students", O: "homework"},
+        "He opens the door.": {S: "He", O: "the door"},
+        "I love pizza.": {S: "I", O: "pizza"},
+        "The baby cries.": {S: "The baby", O: "—"},
+        "The tall boy reads a new book.": {S: "The tall boy", O: "a new book"},
+        "My friends play games in the park.": {S: "My friends", O: "games"},
+        "She cleans the kitchen every morning.": {S: "She", O: "the kitchen"},
+        "The teacher gives the students a test.": {S: "The teacher", O: "the students (direct), a test (indirect/direct)"},
+        "The man who wears a red hat drives a car.": {S: "The man who wears a red hat", O: "a car"},
+        "They buy fruits and vegetables at the market.": {S: "They", O: "fruits and vegetables"}
+      };
+      return answers[sentence] || {S: "—", O: "—"};
+    }
+
+    const quizList = document.getElementById('quizList');
+    const answerBox = document.getElementById('answerBox');
+    const newBtn = document.getElementById('newBtn');
+    const showAnswers = document.getElementById('showAnswers');
+    const dateMeta = document.getElementById('dateMeta');
+
+    function renderQuestions() {
+      const todays = pickTodayQuestions();
+      quizList.innerHTML = '';
+      todays.forEach((q, idx) => {
+        const li = document.createElement('li');
+        li.textContent = q;
+        quizList.appendChild(li);
+      });
+      const d = new Date();
+      dateMeta.textContent = 'Questions for: ' + d.toDateString();
+      answerBox.style.display = 'none';
+    }
+
+    function renderAnswers() {
+      const todays = pickTodayQuestions();
+      const lines = todays.map((q, i) => {
+        const ans = detectSubjectObject(q);
+        return (i+1) + '. ' + q + '\n   Subject: ' + ans.S + '   Object: ' + ans.O;
+      });
+      answerBox.textContent = lines.join('\n\n');
+      answerBox.style.display = 'block';
+    }
+
+    renderQuestions();
+    newBtn.addEventListener('click', () => renderQuestions());
+    showAnswers.addEventListener('click', () => renderAnswers());
+  </script>
+</body>
+</html>
